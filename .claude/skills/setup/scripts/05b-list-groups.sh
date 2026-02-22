@@ -15,4 +15,10 @@ if [ ! -f "$DB_PATH" ]; then
   exit 1
 fi
 
-sqlite3 "$DB_PATH" "SELECT jid, name FROM chats WHERE jid LIKE '%@g.us' AND jid <> '__group_sync__' AND name <> jid ORDER BY last_message_time DESC LIMIT $LIMIT"
+node -e "
+import Database from 'better-sqlite3';
+const db = new Database('$DB_PATH', {readonly: true});
+const rows = db.prepare(\"SELECT jid, name FROM chats WHERE jid LIKE '%@g.us' AND jid <> '__group_sync__' AND name <> jid ORDER BY last_message_time DESC LIMIT $LIMIT\").all();
+rows.forEach(r => console.log(r.jid + '|' + r.name));
+db.close();
+" --input-type=module 2>/dev/null

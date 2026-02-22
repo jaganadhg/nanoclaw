@@ -1,0 +1,14 @@
+skill: convert-to-podman
+version: 1.0.0
+description: "Switch container runtime from Docker to Podman (Linux/macOS)"
+core_version: 0.1.0
+adds: []
+modifies:
+  - src/container-runtime.ts
+  - src/container-runtime.test.ts
+  - src/container-runner.ts
+  - container/build.sh
+structured: {}
+conflicts: []
+depends: []
+test: "npx vitest run src/container-runtime.test.ts"

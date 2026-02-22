@@ -50,6 +50,8 @@ if command -v container >/dev/null 2>&1; then
   CONTAINER_RUNTIME="apple-container"
 elif command -v docker >/dev/null 2>&1 && docker info >/dev/null 2>&1; then
   CONTAINER_RUNTIME="docker"
+elif command -v podman >/dev/null 2>&1 && podman info >/dev/null 2>&1; then
+  CONTAINER_RUNTIME="podman"
 fi
 log "Container runtime: $CONTAINER_RUNTIME"
 
@@ -72,7 +74,12 @@ log "WhatsApp auth: $WHATSAPP_AUTH"
 # 5. Check registered groups (in SQLite — the JSON file gets migrated away on startup)
 REGISTERED_GROUPS=0
 if [ -f "$PROJECT_ROOT/store/messages.db" ]; then
-  REGISTERED_GROUPS=$(sqlite3 "$PROJECT_ROOT/store/messages.db" "SELECT COUNT(*) FROM registered_groups" 2>/dev/null || echo "0")
+  REGISTERED_GROUPS=$(node -e "
+import Database from 'better-sqlite3';
+const db = new Database('$PROJECT_ROOT/store/messages.db', {readonly: true});
+try { console.log(db.prepare('SELECT COUNT(*) as n FROM registered_groups').get().n); } catch { console.log(0); }
+db.close();
+" --input-type=module 2>/dev/null || echo "0")
 fi
 log "Registered groups: $REGISTERED_GROUPS"
 

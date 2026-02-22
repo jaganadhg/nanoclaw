@@ -56,7 +56,13 @@ TIMESTAMP=$(date -u '+%Y-%m-%dT%H:%M:%S.000Z')
 DB_PATH="$PROJECT_ROOT/store/messages.db"
 REQUIRES_TRIGGER_INT=$( [ "$REQUIRES_TRIGGER" = "true" ] && echo 1 || echo 0 )
 
-sqlite3 "$DB_PATH" "INSERT OR REPLACE INTO registered_groups (jid, name, folder, trigger_pattern, added_at, container_config, requires_trigger) VALUES ('$JID', '$NAME', '$FOLDER', '$TRIGGER', '$TIMESTAMP', NULL, $REQUIRES_TRIGGER_INT);"
+node -e "
+import Database from 'better-sqlite3';
+const db = new Database('$DB_PATH');
+db.pragma('journal_mode = WAL');
+db.prepare('INSERT OR REPLACE INTO registered_groups (jid, name, folder, trigger_pattern, added_at, container_config, requires_trigger) VALUES (?, ?, ?, ?, ?, NULL, ?)').run('$JID', '$NAME', '$FOLDER', '$TRIGGER', '$TIMESTAMP', $REQUIRES_TRIGGER_INT);
+db.close();
+" --input-type=module 2>&1
 
 log "Wrote registration to SQLite"
 
